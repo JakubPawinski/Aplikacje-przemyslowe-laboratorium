@@ -10,13 +10,13 @@ import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan.kowalski@example.com", "ABC", 12000);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan.kowalski@example.com", "ABC", Position.MANAGER);
         emp1.setPosition(Position.MANAGER);
 
-        Employee emp2 = new Employee("Anna", "Nowak", "anna.nowak@example.com", "XYZ", 8000);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna.nowak@example.com", "XYZ", Position.TEAM_LEAD);
         emp2.setPosition(Position.TEAM_LEAD);
 
-        Employee emp3 = new Employee("Piotr", "Zieliński", "piotr.zielinski@example.com", "ABC", 25000);
+        Employee emp3 = new Employee("Piotr", "Zieliński", "piotr.zielinski@example.com", "ABC", Position.PRESIDENT);
         emp3.setPosition(Position.PRESIDENT);
 
 

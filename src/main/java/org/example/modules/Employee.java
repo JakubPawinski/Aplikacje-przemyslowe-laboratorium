@@ -10,12 +10,13 @@ public class Employee {
     private Position position;
     private double salary;
 
-    public Employee(String name, String surname, String email, String companyName, double salary) {
+    public Employee(String name, String surname, String email, String companyName, Position position) {
         this.name = name;
         this.surname = surname;
         this.email = email;
         this.companyName = companyName;
-        this.salary = 0.0;
+        this.position = position;
+        this.salary = position != null ? position.getBaseSalary() : 0.0;
     }
 
     public String getCompanyName() {
