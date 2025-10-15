@@ -1,15 +1,9 @@
 package org.example.service;
 
-import org.example.modules.Employee;
+import org.example.model.CompanyStatistics;
+import org.example.model.Employee;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.List;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -135,5 +129,34 @@ public class EmployeeService {
         return Arrays.stream(employees)
                 .filter(Objects::nonNull)
                 .max(Comparator.comparingDouble(Employee::getSalary));
+    }
+
+    public List<Employee> validateSalaryConsistency() {
+        if (employees == null || employees.length == 0) {
+            System.out.println("No employees to validate salary consistency.");
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(employees).filter(employee -> employee.getSalary() < employee.getPosition().getBaseSalary()).collect(Collectors.toList());
+
+    }
+
+    public Map<String, CompanyStatistics> getCompanyStatistics(){
+        if (employees == null || employees.length == 0) {
+            System.out.println("No employees to calculate statistics.");
+            return Collections.emptyMap();
+        }
+        return Arrays.stream(employees)
+                .filter(Objects::nonNull)
+                .filter(e -> e.getCompanyName() != null && !e.getCompanyName().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Employee::getCompanyName,
+                        Collectors.collectingAndThen(Collectors.toList(), empList -> {
+                            int count = empList.size();
+                            double avgSalary = empList.stream().mapToDouble(Employee::getSalary).average().orElse(0.0);
+                            Employee highestPaid = empList.stream().max(Comparator.comparingDouble(Employee::getSalary)).orElse(null);
+                            return new CompanyStatistics(count, avgSalary, highestPaid.getName(), highestPaid.getSurname());
+                        })));
+
     }
 }

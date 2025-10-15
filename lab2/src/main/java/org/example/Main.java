@@ -1,12 +1,14 @@
 package org.example;
 
-import org.example.modules.Employee;
+import org.example.model.Employee;
+import org.example.model.ImportSummary;
 import org.example.model.Position;
+import org.example.service.ApiService;
 import org.example.service.EmployeeService;
+import org.example.service.ImportService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {
@@ -67,5 +69,38 @@ public class Main {
         // Display highest salary employee
         System.out.println("\n Highest salary employee:");
         System.out.println(employeeService.getHighestPaidEmployee());
+
+
+        //Import API data
+        System.out.println("\n Fetching employees from API:");
+        ApiService apiService = new ApiService();
+
+        System.out.println(apiService.fetchEmployessFromApi("https://jsonplaceholder.typicode.com/users"));
+
+        //Import CSV data
+        ImportService importService = new ImportService(employeeService);
+        ImportSummary summary = importService.importFromCsv("employees.csv");
+
+        System.out.println("\n CSV Import Summary:");
+        System.out.println("Imported: " + summary.getImportedCount());
+        System.out.println("Errors: " + summary.getErrors());
+
+        // Display all employees
+        employeeService.displayAllEmployees();
+
+        //Add invalid employee
+        Employee invalidEmp = new Employee("Invalid", "User", "invalid.email.com", "NoCompany", Position.INTERN);
+        invalidEmp.setSalary(2000); // Below minimum for INTERN
+        employeeService.addEmployee(invalidEmp);
+
+        System.out.println("\n Validating salary constraints:");
+        // Validate salary constraints
+        System.out.println(employeeService.validateSalaryConsistency());
+
+
+        // Display company statistics
+        System.out.println("\n Company Statistics:");
+
+        System.out.println(employeeService.getCompanyStatistics());
     }
 }

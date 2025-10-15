@@ -1,6 +1,4 @@
-package org.example.modules;
-
-import org.example.model.Position;
+package org.example.model;
 
 public class Employee {
     private String name;
