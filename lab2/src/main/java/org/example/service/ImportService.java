@@ -28,7 +28,7 @@ public class ImportService {
                 String[] row = allRows.get(i);
 
                 if (row.length == 0 || (row.length == 1 && row[0].trim().isEmpty())) {
-                    continue; // Skip empty rows
+                    continue;
                 }
                 if (row.length != 6) {
                     errors.add("Row " + (i + 1) + ": Incorrect number of columns");

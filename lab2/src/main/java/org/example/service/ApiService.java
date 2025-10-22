@@ -53,6 +53,8 @@ public class ApiService {
             }
         } catch (IOException | InterruptedException e) {
             throw new ApiException("Error " + e.getMessage());
+        } catch (JsonSyntaxException e) {
+            throw new ApiException("Error while parsing JSON: " + e.getMessage());
         }
     }
 }

@@ -137,7 +137,7 @@ public class EmployeeService {
             return Collections.emptyList();
         }
 
-        return Arrays.stream(employees).filter(employee -> employee.getSalary() < employee.getPosition().getBaseSalary()).collect(Collectors.toList());
+        return Arrays.stream(employees).filter(Objects::nonNull).filter(employee -> employee.getSalary() < employee.getPosition().getBaseSalary()).collect(Collectors.toList());
 
     }
 
