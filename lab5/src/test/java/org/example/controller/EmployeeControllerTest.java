@@ -19,33 +19,54 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(EmployeeController.class)
+import org.springframework.test.context.ContextConfiguration;
+
+@WebMvcTest(controllers = EmployeeController.class)
+@ContextConfiguration(classes = {EmployeeController.class, org.example.exception.GlobalExceptionHandler.class, EmployeeControllerTest.MockConfig.class})
 public class EmployeeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private EmployeeService employeeService;
 
     private ObjectMapper objectMapper;
 
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        @Primary
+        public EmployeeService employeeService() {
+            EmployeeService mock = Mockito.mock(EmployeeService.class);
+            Mockito.when(mock.getCompanyStatistics()).thenReturn(java.util.Collections.emptyMap());
+            Mockito.when(mock.validateSalaryConsistency()).thenReturn(java.util.Collections.emptyList());
+            return mock;
+        }
+    }
+
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
+        Mockito.reset(employeeService);
     }
 
     @Test
     void testGetAllEmployees() throws Exception {
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
         emp1.setStatus(EmploymentStatus.ACTIVE);
-        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyB", "Manager", 6000.0);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyB", "MANAGER", 6000.0);
         emp2.setStatus(EmploymentStatus.ACTIVE);
         Mockito.when(employeeService.getEmployees()).thenReturn(new Employee[]{emp1, emp2});
 
@@ -58,7 +79,7 @@ public class EmployeeControllerTest {
 
     @Test
     void testGetEmployeeByEmail() throws Exception {
-        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
         emp.setStatus(EmploymentStatus.ACTIVE);
         Mockito.when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(emp);
 
@@ -79,8 +100,7 @@ public class EmployeeControllerTest {
 
     @Test
     void testAddEmployee() throws Exception {
-        EmployeeDTO dto = new EmployeeDTO("Jan", "Kowalski", "jan@example.com", "CompanyA", Position.valueOf("Developer"), 5000.0, null);
-        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        EmployeeDTO dto = new EmployeeDTO("Jan", "Kowalski", "jan@example.com", "CompanyA", Position.MANAGER, 5000.0, null);
         Mockito.when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(null);
         Mockito.doNothing().when(employeeService).addEmployee(any(Employee.class));
 
@@ -93,7 +113,7 @@ public class EmployeeControllerTest {
 
     @Test
     void testAddEmployeeDuplicate() throws Exception {
-        EmployeeDTO dto = new EmployeeDTO("Jan", "Kowalski", "jan@example.com", "CompanyA", Position.valueOf("Developer"), 5000.0, null);
+        EmployeeDTO dto = new EmployeeDTO("Jan", "Kowalski", "jan@example.com", "CompanyA", Position.MANAGER, 5000.0, null);
         Mockito.when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(new Employee());
 
         mockMvc.perform(post("/api/employees")
@@ -104,7 +124,7 @@ public class EmployeeControllerTest {
 
     @Test
     void testDeleteEmployee() throws Exception {
-        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
         Mockito.when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(emp);
         Mockito.doNothing().when(employeeService).deleteEmployee("jan@example.com");
 
@@ -114,9 +134,9 @@ public class EmployeeControllerTest {
 
     @Test
     void testGetEmployeesByCompany() throws Exception {
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
         emp1.setStatus(EmploymentStatus.ACTIVE);
-        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "Manager", 6000.0);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "MANAGER", 6000.0);
         emp2.setStatus(EmploymentStatus.ACTIVE);
         Mockito.when(employeeService.getEmployees()).thenReturn(new Employee[]{emp1, emp2});
 
@@ -128,14 +148,14 @@ public class EmployeeControllerTest {
 
     @Test
     void testUpdateEmployeeStatus() throws Exception {
-        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
+        Employee emp = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
         emp.setStatus(EmploymentStatus.ACTIVE);
         Mockito.when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(emp);
         Mockito.doNothing().when(employeeService).updateEmployee(any(Employee.class));
 
         mockMvc.perform(patch("/api/employees/jan@example.com/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"ON_LEAVE\"}"))
+                        .content(objectMapper.writeValueAsString(EmploymentStatus.ON_LEAVE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ON_LEAVE"));
     }

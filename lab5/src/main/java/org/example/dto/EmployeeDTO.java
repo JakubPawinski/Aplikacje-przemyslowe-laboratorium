@@ -26,6 +26,13 @@ public class EmployeeDTO {
     }
 
     public EmployeeDTO(String name, String surname, String email, String companyName, Position position, double salary, EmploymentStatus status) {
+        this.firstName = name;
+        this.lastName = surname;
+        this.email = email;
+        this.company = companyName;
+        this.position = position;
+        this.salary = salary;
+        this.status = status != null ? status.name() : null;
     }
 
     // Gettery i settery

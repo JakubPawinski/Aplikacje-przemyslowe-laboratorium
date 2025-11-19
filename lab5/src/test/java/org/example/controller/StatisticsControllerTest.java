@@ -20,20 +20,37 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StatisticsController.class)
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.example.model.Position;
+
+@WebMvcTest(controllers = StatisticsController.class)
+@ContextConfiguration(classes = {StatisticsController.class, org.example.exception.GlobalExceptionHandler.class, StatisticsControllerTest.MockConfig.class})
 public class StatisticsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private EmployeeService employeeService;
 
     private ObjectMapper objectMapper;
 
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        @Primary
+        public EmployeeService employeeService() {
+            return Mockito.mock(EmployeeService.class);
+        }
+    }
+
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
+        Mockito.reset(employeeService);
     }
 
     @Test
@@ -47,8 +64,8 @@ public class StatisticsControllerTest {
 
     @Test
     void testGetAverageSalaryByCompany() throws Exception {
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
-        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "Manager", 6000.0);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "MANAGER", 6000.0);
         Mockito.when(employeeService.getEmployeeByCompanyName("CompanyA")).thenReturn(new Employee[]{emp1, emp2});
 
         mockMvc.perform(get("/api/statistics/salary/average").param("company", "CompanyA"))
@@ -67,8 +84,8 @@ public class StatisticsControllerTest {
         Map<String, CompanyStatistics> statsMap = new HashMap<>();
         statsMap.put("CompanyA", stats);
 
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
-        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "Manager", 6000.0);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "MANAGER", 6000.0);
 
         Mockito.when(employeeService.getCompanyStatistics()).thenReturn(statsMap);
         Mockito.when(employeeService.getEmployeeByCompanyName("CompanyA")).thenReturn(new Employee[]{emp1, emp2});
@@ -93,21 +110,19 @@ public class StatisticsControllerTest {
     @Test
     void testGetEmployeesByPosition() throws Exception {
         Map<String, Integer> positionCounts = new HashMap<>();
-        positionCounts.put("Developer", 5);
-        positionCounts.put("Manager", 3);
+        positionCounts.put("MANAGER", 8);
 
         Mockito.when(employeeService.getPositionCounts()).thenReturn(positionCounts);
 
         mockMvc.perform(get("/api/statistics/positions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.Developer").value(5))
-                .andExpect(jsonPath("$.Manager").value(3));
+                .andExpect(jsonPath("$.MANAGER").value(8));
     }
 
     @Test
     void testGetEmployeesByStatus() throws Exception {
-        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "Developer", 5000.0);
-        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "Manager", 6000.0);
+        Employee emp1 = new Employee("Jan", "Kowalski", "jan@example.com", "CompanyA", "MANAGER", 5000.0);
+        Employee emp2 = new Employee("Anna", "Nowak", "anna@example.com", "CompanyA", "MANAGER", 6000.0);
         Mockito.when(employeeService.getEmployees()).thenReturn(new Employee[]{emp1, emp2});
 
         mockMvc.perform(get("/api/statistics/status"))
